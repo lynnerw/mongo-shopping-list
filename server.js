@@ -48,14 +48,13 @@ app.post('/items', function(req, res) {
 });
 
 app.put('/items/:id', function(req, res) {
-    console.log(req.params.id + ' ' + req.body.name);
-    Item.findOneAndUpdate({
-        _id: req.params.id
-        }, 
-        {$set:{name:req.body.name}},
-        function(err, item) {
+//   console.log(req.params.id + ' ' + req.body.name);
+    Item.findByIdAndUpdate(req.params.id, 
+    { $set: { name: req.body.name }}, 
+    { new: true }, 
+    function (err, item) {
         if (err) {
-            return res.status(500).json({message: 'Internal Server Error; name is ' + req.body.name});
+            return res.status(500).json({message: 'Internal Server Error' });
         }
         res.status(201).json(item);
     });
