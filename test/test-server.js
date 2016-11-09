@@ -38,9 +38,8 @@ describe('Shopping List', function() {
                     res.body.should.be.a('array');
                     res.body.should.have.length(3);
                     res.body[0].should.be.a('object');
-                    res.body[0].should.have.property('id');
+                    res.body[0].should.have.property('_id');
                     res.body[0].should.have.property('name');
-                    res.body[0].id.should.be.a('number');
                     res.body[0].name.should.be.a('string');
                     res.body[0].name.should.equal('bananas');
                     res.body[1].name.should.equal('tomatoes');
@@ -57,31 +56,20 @@ describe('Shopping List', function() {
                 .end(function(err, res) {
                     should.equal(err, null);
                     res.should.have.status(201);
-                    storage.items.should.have.length(4);
+                    res.should.be.json;
+                    res.body.should.be.a('object');
+                    res.body.should.have.property('name');
+                    res.body.name.should.equal('kale');
                     done();
                 });
         });
-        it('should fail and return a message if request.body.name does not exist', function(done) {
-            chai.request(app)
-                .post('/items')
-                .send({})
-                .end(function(err, res) {
-                    should.not.equal(err, null);
-                    res.should.have.status(400);
-                    res.body.should.have.property('status');
-                    res.body.status.should.equal('Failed: item name missing');
-                    done();
-                });
-        });
-        it('should fail and return a message if item name already exists', function(done) {
+        it('should fail and return a 403 and error message if item name already exists', function(done) {
             chai.request(app)
                 .post('/items')
                 .send({'name': 'bananas'})
                 .end(function(err, res) {
                     should.not.equal(err, null);
-                    res.should.have.status(400);
-                    res.body.should.have.property('status');
-                    res.body.status.should.equal('Failed: item name already exists');
+                    res.should.have.status(403);
                     done();
                 });
         });
@@ -89,75 +77,84 @@ describe('Shopping List', function() {
     describe('put', function() {
         it('should edit an item on PUT', function(done) {
             chai.request(app)
-                .put('/items/3')
-                .send({'name':'pizza','id': 3})
-                .end(function(err, res) {
-                    console.log(res);
-                    should.equal(err, null);
-                    res.should.have.status(200);
-                    res.should.be.json;
-                    res.body.should.have.property('status');
-                    res.body.status.should.equal('Update successful');
-                    done();
+                .get('/items')
+                .end(function(err, res){
+                    chai.request(app)
+                        .put('/items/'+res.body[0]._id)
+                        .send({'_id': res.body[0]._id, 'name': 'pizza'})
+                        .end(function(error, res) {
+                            should.equal(err, null);
+                            res.should.be.json;
+                            res.should.have.status(201);
+                            res.body.should.have.property('name');
+                            res.body.name.should.equal('pizza');
+                            done();
+                         });
                 });
         });
-        it('should fail and return a 404 if item name is missing', function(done) {
+        it('should fail and return a 404 if request does not have item name', function(done) {
             chai.request(app)
-                .put('/items/2')
-                .send({'id': 2})
-                .end(function(err, res) {
-                    res.should.not.equal(null);
-                    res.should.have.status(404);
-                    done();
+                .get('/items')
+                .end(function(err, res){
+                    chai.request(app)
+                        .put('/items/'+res.body[1]._id)
+                        .send({'_id': res.body[1]._id})
+                        .end(function(err, res) {
+                            res.should.not.equal(null);
+                            res.should.have.status(404);
+                            done();
+                        });
                 });
         });
         it('should fail and return message if request ID does not equal endpoint ID', function(done) {
             chai.request(app)
-                .put('/items/3')
-                .send({'name':'bananas','id': 1})
-                .end(function(err, res) {
+                .get('/items')
+                .end(function(err, res){
+                chai.request(app)
+                    .put('/items/'+res.body[1]._id)
+                    .send({'name':'bananas','_id': res.body[2]._id})
+                    .end(function(err, res) {
                     res.should.not.equal(null);
                     res.should.have.status(400);
-                    res.body.should.have.property('status');
-                    res.body.status.should.equal('Failed: wrong endpoint or id');
                     done();
-                });
+                    });
+            });
         });
     }), // end PUT
     describe('delete', function() {
-        it('should delete an item', function(done) {
-            chai.request(app)
-                .delete('/items/3')
-                .end(function(err, res) {
-                    should.equal(err, null);
-                    res.should.have.status(200);
-                    res.should.be.json;
-                    res.should.be.a('object');
-                    res.body.should.have.property('status');
-                    res.body.status.should.equal('Delete successful');
-                    done();
-                });
-        });
-        it('should fail and return message if item does not exist', function(done) {
-            chai.request(app)
-                .delete('/items/8')
-                .end(function(err, res) {
-                    should.not.equal(err, null);
-                    res.should.have.status(400);
-                    res.should.be.json;
-                    res.should.be.a('object');
-                    res.body.should.have.property('status');
-                    res.body.status.should.equal('Delete failed');
-                    done();
-                });
-        });
         it('should fail if endpoint does not contain ID', function(done) {
             chai.request(app)
                 .delete('/items/ ')
                 .end(function(err, res) {
                     should.not.equal(err, null);
                     res.should.have.status(404);
+                    res.body.should.have.property('message');
+//                    res.body.message.should.equal('Invalid id request');
                     done();
+                });
+        });
+        it('should fail and return 404 if item does not exist', function(done) {
+            chai.request(app)
+                .delete('/items/000zz0000z00z00z0zz00zzz')
+                .end(function(err, res) {
+                    should.not.equal(err, null);
+                    res.should.have.status(404);
+                    done();
+                });
+        });
+        it('should delete an item', function(done) {
+            chai.request(app)
+                .get('/items')
+                .end(function(err, res){
+                    chai.request(app)
+                    .delete('/items/'+res.body[0]._id)
+                    .end(function(err, res) {
+                        should.equal(err, null);
+                        res.should.be.json;
+                        res.should.have.status(200);
+//                        res.body.status.should.equal('Delete successful');
+                        done();
+                    });
                 });
         });
     });

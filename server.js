@@ -28,8 +28,7 @@ var Item = require('./models/item');
 app.get('/items', function(req, res) {
     Item.find(function(err, items) {
         if (err) {
-            return res.status(500).json({
-                message: 'Internal Server Error'
+            return res.status(500).json({message: 'Internal Server Error'
             });
         }
         res.json(items);
@@ -37,38 +36,61 @@ app.get('/items', function(req, res) {
 });
 
 app.post('/items', function(req, res) {
-    Item.create({
-        name: req.body.name
-    }, function(err, item) {
-        if (err) {
-            return res.status(500).json({message: 'Internal Server Error'});
+    if (!('name' in req.body)) {
+        return res.status(404).json({message: 'Failed: db request did not include item name'});
+    }
+    Item.findOne({ name: req.body.name }, function(err, item) {
+        if (item) {
+            return res.status(403).json({message:'Failed: item name already exists'});
         }
-        res.status(201).json(item);
-    }); 
+        Item.create({ name: req.body.name }, function(err, item) {
+            if (err) {
+                return res.status(500).json({message: 'Internal server error'});
+            } else {
+            res.status(201).json(item);
+            }
+        });
+    });
 });
 
 app.put('/items/:id', function(req, res) {
-//   console.log(req.params.id + ' ' + req.body.name);
+    if (!('name' in req.body)) {
+        return res.status(404).json({message: 'Failed: db request did not include item name'});
+    }
+    if (req.params.id != req.body.id) {
+        return res.status(400).json({message: 'Failed: endpoint DNE id of request'});
+    }
     Item.findByIdAndUpdate(req.params.id, 
     { $set: { name: req.body.name }}, 
     { new: true }, 
     function (err, item) {
         if (err) {
             return res.status(500).json({message: 'Internal Server Error' });
-        }
-        res.status(201).json(item);
+        } else
+        return res.status(201).json(item);
     });
 });
 
 app.delete('/items/:id', function(req, res) {
-    Item.remove({
-        _id: req.params.id
-    }, function(err, item) {
-        if (err) {
-            return res.status(500).json({message: 'Internal Server Error'});
-        }
-        res.status(201).json(item);
-    });
+    if (!('id' in req.params)) {
+        return res.status(404).json({message: 'Invalid id request'});
+    } 
+    Item.findOne({ 
+        _id: req.params.id}, 
+        function(err, items) {
+            if (err) {
+                console.log('err is ' + err);
+                return res.status(404).json({message:'Failed: item does not exist'});
+            } else {
+                Item.remove({_id: req.params.id},
+                function(err, item) {
+                    if (err) {
+                        return res.status(500).json({message: 'Internal server error'});
+                    } else
+                    return res.status(200).json({message: 'Delete successful'});
+                });
+            }
+        });
 });
 
 app.use('*', function(req, res) {
