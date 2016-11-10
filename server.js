@@ -53,14 +53,11 @@ app.post('/items', function(req, res) {
     });
 });
 
-app.put('/items/:id', function(req, res) {
+app.put('/items', function(req, res) {
     if (!('name' in req.body)) {
         return res.status(404).json({message: 'Db request did not include item name'});
     }
-    if (req.params.id != req.body._id) {
-        return res.status(400).json({message: 'Endpoint does not equal id of request'});
-    }
-    Item.findByIdAndUpdate(req.params.id, 
+    Item.findByIdAndUpdate(req.body._id, 
     { $set: { name: req.body.name }}, 
     { new: true }, 
     function (err, item) {
@@ -72,9 +69,6 @@ app.put('/items/:id', function(req, res) {
 });
 
 app.delete('/items/:id', function(req, res) {
-    if (!('id' in req.params)) {
-        return res.status(404).json({message: 'Endpoint does not contain id'});
-    } 
     Item.findOne({ 
         _id: req.params.id}, 
         function(err, items) {

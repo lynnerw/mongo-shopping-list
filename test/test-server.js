@@ -83,7 +83,7 @@ describe('Shopping List', function() {
                 .get('/items')
                 .end(function(err, res){
                     chai.request(app)
-                        .put('/items/'+res.body[1]._id)
+                        .put('/items')
                         .send({'_id': res.body[1]._id})
                         .end(function(err, res) {
                             res.should.not.equal(null);
@@ -95,29 +95,12 @@ describe('Shopping List', function() {
                         });
                 });
         });
-        it('should fail and return message if request ID does not equal endpoint ID', function(done) {
-            chai.request(app)
-                .get('/items')
-                .end(function(err, res){
-                chai.request(app)
-                    .put('/items/'+res.body[1]._id)
-                    .send({'name':'bananas','_id': res.body[2]._id})
-                    .end(function(err, res) {
-                    res.should.not.equal(null);
-                    res.should.have.status(400);
-                    res.should.be.json;
-                    res.body.should.have.property('message');
-                    res.body.message.should.equal('Endpoint does not equal id of request');
-                    done();
-                    });
-            });
-        });
         it('should edit an item on PUT', function(done) {
             chai.request(app)
                 .get('/items')
                 .end(function(err, res){
                     chai.request(app)
-                        .put('/items/'+res.body[0]._id)
+                        .put('/items')
                         .send({'_id': res.body[0]._id, 'name': 'pizza'})
                         .end(function(error, res) {
                             should.equal(err, null);
@@ -131,19 +114,8 @@ describe('Shopping List', function() {
         });
     }), // end PUT
     describe('delete', function() {
-        it('should fail if endpoint does not contain ID', function(done) {
-            chai.request(app)
-                .delete('/items')
-                .end(function(err, res) {
-                    should.not.equal(err, null);
-                    res.should.have.status(400);
-                    res.should.be.json;
-                    res.body.should.have.property('message');
-                    res.body.message.should.equal('Endpoint does not contain id');
-                    done();
-                });
-        });
-        it('should fail and return 404 if item does not exist', function(done) {
+
+        it('should fail and return 404 if item does not exist at endpoint specified', function(done) {
             chai.request(app)
                 .delete('/items/000zz0000z00z00z0zz00zzz')
                 .end(function(err, res) {

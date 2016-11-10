@@ -1,4 +1,6 @@
-exports.DATABASE_URL = process.env.DATABASE_URL ||
+var mlab_URL = 'mongodb://mlabdb:2SunSky&Luv@ds139937.mlab.com:39937/thinkfullyn';
+exports.DATABASE_URL = mlab_URL ||
+                       process.env.DATABASE_URL ||
                        global.DATABASE_URL ||
                        (process.env.NODE_ENV === 'production' ?
                             'mongodb://localhost/shopping-list' :
