@@ -37,11 +37,11 @@ app.get('/items', function(req, res) {
 
 app.post('/items', function(req, res) {
     if (!('name' in req.body)) {
-        return res.status(404).json({message: 'Failed: db request did not include item name'});
+        return res.status(404).json({message: 'Db request did not include item name'});
     }
     Item.findOne({ name: req.body.name }, function(err, item) {
         if (item) {
-            return res.status(403).json({message:'Failed: item name already exists'});
+            return res.status(403).json({message:'Item name already exists'});
         }
         Item.create({ name: req.body.name }, function(err, item) {
             if (err) {
@@ -55,10 +55,10 @@ app.post('/items', function(req, res) {
 
 app.put('/items/:id', function(req, res) {
     if (!('name' in req.body)) {
-        return res.status(404).json({message: 'Failed: db request did not include item name'});
+        return res.status(404).json({message: 'Db request did not include item name'});
     }
-    if (req.params.id != req.body.id) {
-        return res.status(400).json({message: 'Failed: endpoint DNE id of request'});
+    if (req.params.id != req.body._id) {
+        return res.status(400).json({message: 'Endpoint does not equal id of request'});
     }
     Item.findByIdAndUpdate(req.params.id, 
     { $set: { name: req.body.name }}, 
@@ -73,14 +73,13 @@ app.put('/items/:id', function(req, res) {
 
 app.delete('/items/:id', function(req, res) {
     if (!('id' in req.params)) {
-        return res.status(404).json({message: 'Invalid id request'});
+        return res.status(404).json({message: 'Endpoint does not contain id'});
     } 
     Item.findOne({ 
         _id: req.params.id}, 
         function(err, items) {
             if (err) {
-                console.log('err is ' + err);
-                return res.status(404).json({message:'Failed: item does not exist'});
+                return res.status(404).json({message:'Item does not exist'});
             } else {
                 Item.remove({_id: req.params.id},
                 function(err, item) {

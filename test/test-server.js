@@ -70,28 +70,14 @@ describe('Shopping List', function() {
                 .end(function(err, res) {
                     should.not.equal(err, null);
                     res.should.have.status(403);
+                    res.should.be.json;
+                    res.body.should.have.property('message');
+                    res.body.message.should.equal('Item name already exists');
                     done();
                 });
         });
     }), // end POST
     describe('put', function() {
-        it('should edit an item on PUT', function(done) {
-            chai.request(app)
-                .get('/items')
-                .end(function(err, res){
-                    chai.request(app)
-                        .put('/items/'+res.body[0]._id)
-                        .send({'_id': res.body[0]._id, 'name': 'pizza'})
-                        .end(function(error, res) {
-                            should.equal(err, null);
-                            res.should.be.json;
-                            res.should.have.status(201);
-                            res.body.should.have.property('name');
-                            res.body.name.should.equal('pizza');
-                            done();
-                         });
-                });
-        });
         it('should fail and return a 404 if request does not have item name', function(done) {
             chai.request(app)
                 .get('/items')
@@ -102,6 +88,9 @@ describe('Shopping List', function() {
                         .end(function(err, res) {
                             res.should.not.equal(null);
                             res.should.have.status(404);
+                            res.should.be.json;
+                            res.body.should.have.property('message');
+                            res.body.message.should.equal('Db request did not include item name');
                             done();
                         });
                 });
@@ -116,20 +105,41 @@ describe('Shopping List', function() {
                     .end(function(err, res) {
                     res.should.not.equal(null);
                     res.should.have.status(400);
+                    res.should.be.json;
+                    res.body.should.have.property('message');
+                    res.body.message.should.equal('Endpoint does not equal id of request');
                     done();
                     });
             });
+        });
+        it('should edit an item on PUT', function(done) {
+            chai.request(app)
+                .get('/items')
+                .end(function(err, res){
+                    chai.request(app)
+                        .put('/items/'+res.body[0]._id)
+                        .send({'_id': res.body[0]._id, 'name': 'pizza'})
+                        .end(function(error, res) {
+                            should.equal(err, null);
+                            res.should.have.status(201);
+                            res.should.be.json;
+                            res.body.should.have.property('name');
+                            res.body.name.should.equal('pizza');
+                            done();
+                         });
+                });
         });
     }), // end PUT
     describe('delete', function() {
         it('should fail if endpoint does not contain ID', function(done) {
             chai.request(app)
-                .delete('/items/ ')
+                .delete('/items')
                 .end(function(err, res) {
                     should.not.equal(err, null);
-                    res.should.have.status(404);
+                    res.should.have.status(400);
+                    res.should.be.json;
                     res.body.should.have.property('message');
-//                    res.body.message.should.equal('Invalid id request');
+                    res.body.message.should.equal('Endpoint does not contain id');
                     done();
                 });
         });
@@ -139,7 +149,10 @@ describe('Shopping List', function() {
                 .end(function(err, res) {
                     should.not.equal(err, null);
                     res.should.have.status(404);
-                    done();
+                    res.should.be.json;
+                    res.body.should.have.property('message');
+                    res.body.message.should.equal('Item does not exist');
+                   done();
                 });
         });
         it('should delete an item', function(done) {
@@ -150,9 +163,10 @@ describe('Shopping List', function() {
                     .delete('/items/'+res.body[0]._id)
                     .end(function(err, res) {
                         should.equal(err, null);
-                        res.should.be.json;
                         res.should.have.status(200);
-//                        res.body.status.should.equal('Delete successful');
+                        res.should.be.json;
+                        res.body.should.have.property('message');
+                        res.body.message.should.equal('Delete successful');
                         done();
                     });
                 });
